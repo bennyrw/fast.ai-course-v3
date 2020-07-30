@@ -1,0 +1,33 @@
+#!/bin/bash -eux
+
+export IMAGE_FAMILY="pytorch-latest-gpu" # or "pytorch-latest-cpu" for non-GPU instances
+export ZONE="us-west1-b"
+export INSTANCE_NAME="my-fastai-instance"
+export INSTANCE_TYPE="n1-highmem-8" # budget: "n1-highmem-4"
+
+case "$1" in
+  create)
+	# command used to create the instance (remember to set GPU quota to 1)
+	gcloud compute instances create $INSTANCE_NAME \
+        	 --zone=$ZONE \
+        	 --image-family=$IMAGE_FAMILY \
+        	 --image-project=deeplearning-platform-release \
+        	 --maintenance-policy=TERMINATE \
+         	--accelerator="type=nvidia-tesla-p100,count=1" \
+         	--machine-type=$INSTANCE_TYPE \
+         	--boot-disk-size=200GB \
+         	--metadata="install-nvidia-driver=True" \
+	#         --preemptible
+
+	echo "After a few minutes you'll be able to ssh in"
+	echo.
+	echo "Then change to ~/tutorials/fastai/course-v3 and run:"
+	echo "  git checkout ."
+	echo "  git pull"
+	echo "  sudo /opt/anaconda3/bin/conda install -c fastai fastai"
+	;;
+
+  ssh)
+	gcloud compute ssh --zone=$ZONE jupyter@$INSTANCE_NAME -- -L 8080:localhost:8080 -L 8008:localhost:8008
+	;;
+esac
